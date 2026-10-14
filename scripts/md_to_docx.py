@@ -23,7 +23,7 @@ from docx.shared import Emu
 INLINE = re.compile(r"(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))")
 IMG = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
-NUM_ITEM = re.compile(r"^\s*\d+[.)]\s+(.*)")
+NUM_ITEM = re.compile(r"^\s*(\d+)[.)]\s+(.*)")
 MISSING = []  # image refs not found; main() reports them and exits 1
 
 
@@ -59,8 +59,8 @@ def add_runs(par, text, doc, base: Path):
         elif part.startswith("!["):
             add_image(doc, part, base)
         elif part.startswith("[") and LINK.fullmatch(part):
-            text, url = LINK.fullmatch(part).groups()
-            par.add_run(text if text == url else f"{text} ({url})")
+            label, url = LINK.fullmatch(part).groups()
+            par.add_run(label if label == url else f"{label} ({url})")
         elif part.startswith("*") and part.endswith("*") and len(part) > 2:
             par.add_run(part[1:-1]).italic = True
         else:
@@ -167,8 +167,8 @@ def find_content_marker(doc):
     return None
 
 
-def new_list_num(doc):
-    # new w:num on the List Number abstract list, restarting at 1; None if the style has no numbering
+def new_list_num(doc, start):
+    # new w:num on the List Number abstract list, restarting at `start`; None if the style has no numbering
     s = style(doc, "List Number")
     pPr = s.element.pPr if s is not None else None
     if pPr is None or pPr.numPr is None or pPr.numPr.numId is None:
@@ -184,7 +184,7 @@ def new_list_num(doc):
     ov = OxmlElement("w:lvlOverride")
     ov.set(qn("w:ilvl"), "0")
     so = OxmlElement("w:startOverride")
-    so.set(qn("w:val"), "1")
+    so.set(qn("w:val"), str(start))
     ov.append(so)
     num.append(ov)
     base.addnext(num)
@@ -301,9 +301,9 @@ def main():
         m = NUM_ITEM.match(line)
         if m:
             if num_id is None:
-                num_id = new_list_num(doc)
+                num_id = new_list_num(doc, int(m.group(1)))
             p = doc.add_paragraph()
-            add_runs(p, m.group(1), doc, base)
+            add_runs(p, m.group(2), doc, base)
             set_style(p, doc, "List Number")
             if num_id is not None:
                 numPr = p._p.get_or_add_pPr().get_or_add_numPr()

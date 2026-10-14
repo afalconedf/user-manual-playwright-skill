@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from docx import Document
+from docx.oxml.ns import qn
 from PIL import Image
 
 CHECK = Path(__file__).resolve().parents[1] / "check_manual.py"
@@ -93,6 +94,19 @@ class MdToDocxTests(unittest.TestCase):
         self.assertEqual(len(nums), 3)
         self.assertEqual(nums[0], nums[1])
         self.assertNotEqual(nums[2], nums[0])
+        num = doc.part.numbering_part.element.num_having_numId(nums[2])
+        self.assertEqual(num.find(".//" + qn("w:startOverride")).get(qn("w:val")), "1")
+
+    def test_list_restart_takes_start_number_from_item(self):
+        def setup(d):
+            (d / "images").mkdir()
+            Image.new("RGB", (1920, 1080)).save(d / "images" / "s.png")
+
+        code, err, doc = run_md2docx("1. a\n![s](images/s.png)\n2. b\n", setup)
+        self.assertEqual(code, 0, err)
+        b = next(p for p in doc.paragraphs if p.text == "b")
+        num = doc.part.numbering_part.element.num_having_numId(b._p.pPr.numPr.numId.val)
+        self.assertEqual(num.find(".//" + qn("w:startOverride")).get(qn("w:val")), "2")
 
     def test_missing_image_fails_run(self):
         code, err, doc = run_md2docx("![pic](images/missing.png)\n")
