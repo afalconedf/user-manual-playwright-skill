@@ -1,0 +1,13 @@
+{
+  "name": "user-manual-playwright",
+  "description": "End-user manual writer for web apps: Playwright screenshots at 1920x1080, sensitive data blurred, per-role UI, DOCX output from a template.",
+  "owner": { "name": "Alessio Falcone", "url": "https://github.com/afalconedf" },
+  "plugins": [
+    {
+      "name": "user-manual-playwright",
+      "description": "End-user manual writer for web apps: Playwright screenshots at 1920x1080, sensitive data blurred, per-role UI, DOCX output from a template.",
+      "source": "./",
+      "category": "documentation"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "user-manual-playwright",
+  "version": "1.0.0",
+  "description": "End-user manual writer for web apps: Playwright screenshots at 1920x1080, sensitive data blurred, per-role UI, DOCX output from a template.",
+  "author": { "name": "Alessio Falcone", "url": "https://github.com/afalconedf" },
+  "homepage": "https://github.com/afalconedf/user-manual-playwright-skill",
+  "repository": "https://github.com/afalconedf/user-manual-playwright-skill",
+  "license": "MIT",
+  "keywords": ["manual", "documentation", "playwright", "docx"]
+}
