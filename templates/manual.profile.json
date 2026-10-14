@@ -1,0 +1,23 @@
+{
+  "manualName": "manual-name",
+  "language": "it",
+  "audience": "customer-facing support team",
+  "baseUrl": "https://app.example.com/",
+  "loginSuccessUrl": "^https://app\\.example\\.com/(?!login)",
+  "viewport": { "width": 1920, "height": 1080 },
+  "docxTemplate": "docs/manual-name/template.docx",
+  "roles": [
+    { "name": "role-a", "description": "What this role does", "authState": "role-a" }
+  ],
+  "rolesDiffer": null,
+  "sensitive": {
+    "blurPx": 8,
+    "selectors": ["table td:nth-child(2)"],
+    "maskSelectors": ["input[type=email]", ".user-name"],
+    "textPatterns": ["[\\w.+-]+@[\\w-]+\\.[\\w.-]+"]
+  },
+  "steps": [
+    { "slug": "main-page", "path": "/home", "actions": [] }
+  ],
+  "notes": "No passwords or tokens in this file."
+}

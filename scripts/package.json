@@ -1,0 +1,9 @@
+{
+  "name": "user-manual-capture",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Playwright helpers for the user-manual-playwright skill",
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}
