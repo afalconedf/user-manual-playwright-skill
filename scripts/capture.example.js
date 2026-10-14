@@ -5,6 +5,15 @@ const fs = require('fs');
 const path = require('path');
 const lib = require('./capture-lib');
 
+// Saved session still valid? Loads the app and checks the logged-in marker (selector, else URL).
+async function isLoggedIn(page, profile) {
+  await page.goto(profile.baseUrl);
+  await page.waitForLoadState('load');
+  if (!profile.loginSuccessSelector) return new RegExp(profile.loginSuccessUrl).test(page.url());
+  return page.locator(profile.loginSuccessSelector).first()
+    .waitFor({ state: 'visible', timeout: 15000 }).then(() => true, () => false);
+}
+
 (async () => {
   const profile = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
   const role = process.argv[3] || profile.roles[0].name;
@@ -13,9 +22,16 @@ const lib = require('./capture-lib');
   const outDir = path.resolve(path.dirname(process.argv[2]), 'images');
   const sensitive = profile.sensitive;
 
-  const interactive = !fs.existsSync(stateFile);
-  const { browser, context, page } = await lib.launch({ headless: !interactive, storageState: stateFile });
+  let interactive = !fs.existsSync(stateFile);
+  let { browser, context, page } = await lib.launch({ headless: !interactive, storageState: stateFile });
   try {
+    if (!interactive && !(await isLoggedIn(page, profile))) {
+      console.error('[login] saved session expired, logging in again');
+      fs.rmSync(stateFile);
+      await browser.close();
+      interactive = true;
+      ({ browser, context, page } = await lib.launch({ headless: false }));
+    }
     if (interactive) {
       // login screen: capture first (user field masked), then let the user log in
       await page.goto(profile.baseUrl);
@@ -23,6 +39,7 @@ const lib = require('./capture-lib');
       await lib.loginInteractive(page, context, {
         startUrl: profile.baseUrl,
         successUrl: new RegExp(profile.loginSuccessUrl),
+        successSelector: profile.loginSuccessSelector,
         stateFile,
       });
     }

@@ -21,10 +21,12 @@ async function launch({ headless = true, storageState, executablePath, locale } 
 }
 
 // Visible browser: the user types credentials/MFA; we wait for the post-login URL and save the session.
-async function loginInteractive(page, context, { startUrl, successUrl, stateFile, timeoutMs = 300000 }) {
+async function loginInteractive(page, context, { startUrl, successUrl, successSelector, stateFile, timeoutMs = 300000 }) {
   await page.goto(startUrl);
   console.error('[login] complete the login in the browser window...');
-  await page.waitForURL(successUrl, { timeout: timeoutMs });
+  // URL-only detection can fire before a JS (e.g. MSAL) redirect to the identity provider.
+  if (successSelector) await page.locator(successSelector).first().waitFor({ state: 'visible', timeout: timeoutMs });
+  else await page.waitForURL(successUrl, { timeout: timeoutMs });
   await page.waitForLoadState('networkidle').catch(() => {});
   if (stateFile) {
     fs.mkdirSync(path.dirname(stateFile), { recursive: true });
@@ -104,15 +106,15 @@ function pngSize(file) {
 }
 
 // Waits, re-applies masks, screenshots at 1920x1080 and verifies the size.
-async function shot(page, outDir, name, { sensitive = {}, fullPage = false, clip } = {}) {
+async function shot(page, outDir, name, { sensitive = {} } = {}) {
   fs.mkdirSync(outDir, { recursive: true });
   await waitIdle(page);
   await applyMasks(page, sensitive);
   const mask = (sensitive.maskSelectors || []).map((s) => page.locator(s));
   const file = path.join(outDir, name.endsWith('.png') ? name : `${name}.png`);
-  await page.screenshot({ path: file, fullPage, clip, mask, maskColor: '#444444' });
+  await page.screenshot({ path: file, mask, maskColor: '#444444' });
   const { width, height } = pngSize(file);
-  if (!fullPage && !clip && (width !== VIEWPORT.width || height !== VIEWPORT.height)) {
+  if (width !== VIEWPORT.width || height !== VIEWPORT.height) {
     throw new Error(`${file} is ${width}x${height}, expected 1920x1080`);
   }
   return file;
