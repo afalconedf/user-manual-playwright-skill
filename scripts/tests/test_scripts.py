@@ -50,6 +50,25 @@ class CheckManualTests(unittest.TestCase):
         self.assertEqual(code, 1, out)
         self.assertIn("e-mail in text", out)
 
+    def test_credentials_flagged(self):
+        for line in ["**Password:** Secr3t123", "DB_PASSWORD=Secr3t123", "client_secret=abcd1234", "password: 123"]:
+            with self.subTest(line=line):
+                code, out = run_check(line + "\n")
+                self.assertEqual(code, 1, out)
+                self.assertIn("possible credential", out)
+
+    def test_prose_not_flagged(self):
+        for line in ["**Password:** type your password", "Password: <your password>", "| Password | the password field |"]:
+            with self.subTest(line=line):
+                code, out = run_check(line + "\n")
+                self.assertEqual(code, 0, out)
+                self.assertNotIn("possible credential", out)
+
+    def test_mailto_link_email_flagged(self):
+        code, out = run_check("[mario.rossi@corp.it](mailto:mario.rossi@corp.it)\n")
+        self.assertEqual(code, 1, out)
+        self.assertIn("e-mail in text", out)
+
 
 if __name__ == "__main__":
     unittest.main()
