@@ -4,7 +4,7 @@
   "audience": "customer-facing support team",
   "baseUrl": "https://app.example.com/",
   "loginSuccessUrl": "^https://app\\.example\\.com/(?!login)",
-  "loginSuccessSelector": "nav, [role=navigation]",
+  "loginSuccessSelector": "",
   "docxTemplate": "docs/manual-name/template.docx",
   "roles": [
     { "name": "role-a", "description": "What this role does", "authState": "role-a" }

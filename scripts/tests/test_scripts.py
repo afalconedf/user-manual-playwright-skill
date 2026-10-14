@@ -49,26 +49,34 @@ class CheckManualTests(unittest.TestCase):
         self.assertNotIn("e-mail", out)
 
     def test_email_in_text_is_flagged(self):
-        code, out = run_check("contact mario.rossi@corp.it\n")
+        code, out = run_check("contact mario.rossi@example.com\n")
+        self.assertEqual(code, 1, out)
+        self.assertIn("e-mail in text", out)
+
+    def test_email_in_link_target_is_flagged(self):
+        code, out = run_check("[Contact](https://app.example.com/u?email=mario.rossi@example.com)\n")
         self.assertEqual(code, 1, out)
         self.assertIn("e-mail in text", out)
 
     def test_credentials_flagged(self):
-        for line in ["**Password:** Secr3t123", "DB_PASSWORD=Secr3t123", "client_secret=abcd1234", "password: 123"]:
+        for line in ["**Password:** Secr3t123", "DB_PASSWORD=Secr3t123", "client_secret=abcd1234", "password: 123",
+                     "api_key=sk_live_abcdef123", "secret: my_Passw0rd", "token: abc_def_123",
+                     "accessToken: abc123XYZ", "userPassword=Secr3t1"]:
             with self.subTest(line=line):
                 code, out = run_check(line + "\n")
                 self.assertEqual(code, 1, out)
                 self.assertIn("possible credential", out)
 
     def test_prose_not_flagged(self):
-        for line in ["**Password:** type your password", "Password: <your password>", "| Password | the password field |"]:
+        for line in ["**Password:** type your password", "Password: <your password>", "| Password | the password field |",
+                     "**Password:** _type your password_", "Password: *required*"]:
             with self.subTest(line=line):
                 code, out = run_check(line + "\n")
                 self.assertEqual(code, 0, out)
                 self.assertNotIn("possible credential", out)
 
     def test_mailto_link_email_flagged(self):
-        code, out = run_check("[mario.rossi@corp.it](mailto:mario.rossi@corp.it)\n")
+        code, out = run_check("[mario.rossi@example.com](mailto:mario.rossi@example.com)\n")
         self.assertEqual(code, 1, out)
         self.assertIn("e-mail in text", out)
 

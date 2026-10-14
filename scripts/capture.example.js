@@ -9,7 +9,10 @@ const lib = require('./capture-lib');
 async function isLoggedIn(page, profile) {
   await page.goto(profile.baseUrl);
   await page.waitForLoadState('load');
-  if (!profile.loginSuccessSelector) return new RegExp(profile.loginSuccessUrl).test(page.url());
+  if (!profile.loginSuccessSelector) {
+    await page.waitForLoadState('networkidle').catch(() => {});
+    return new RegExp(profile.loginSuccessUrl).test(page.url());
+  }
   return page.locator(profile.loginSuccessSelector).first()
     .waitFor({ state: 'visible', timeout: 15000 }).then(() => true, () => false);
 }
