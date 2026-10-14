@@ -11,7 +11,7 @@ from pathlib import Path
 
 IMG = re.compile(r"!\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
-SECRET = re.compile(r"(password|pwd|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S+", re.I)
+SECRET = re.compile(r"\b(password|pwd|passwd|secret|token|api[_-]?key)\b\s*[:=]\s*(?![*_`\s])\S{4,}", re.I)
 VAT = re.compile(r"\b(?:IT)?\d{11}\b")
 IBAN = re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b")
 
@@ -48,7 +48,8 @@ def main():
                 s = png_size(p)
                 if s != want:
                     errors.append(f"{ln}: {ref} is {s}, expected {want}")
-        for m in EMAIL.finditer(line):
+        bare = re.sub(r"!?\[[^\]]*\]\([^)]*\)", "", line)  # ignore image/link targets
+        for m in EMAIL.finditer(bare):
             if not any(m.group(0).lower().endswith("@" + d.lower()) for d in a.allow_email):
                 errors.append(f"{ln}: e-mail in text: {m.group(0)}")
         if SECRET.search(line):
