@@ -17,8 +17,8 @@ Template conventions understood by `md_to_docx.py`:
 1. **Copilot/agent docx capability** (if the host exposes a docx skill/agent): give it the `.md`, `images/` and the template; ask it to keep the template's styles, header/footer, numbering, to insert images at full text width, and to keep tables as Word tables. Use a light model.
 2. **Script**: 
    ```
-   pip install -r scripts/requirements.txt
-   python scripts/md_to_docx.py docs/<manual>/manual.md --template docs/<manual>/template.docx -o docs/<manual>/manual.docx --title "…" --version 1.0 --toc
+   pip install -r <skill-dir>/scripts/requirements.txt
+   python <skill-dir>/scripts/md_to_docx.py docs/<manual>/manual.md --template docs/<manual>/template.docx -o docs/<manual>/manual.docx --title "…" --version 1.0 --toc
    ```
 3. **Pandoc** (if installed): `pandoc manual.md -o manual.docx --reference-doc=template.docx --resource-path=.`
 

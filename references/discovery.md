@@ -1,6 +1,6 @@
 # Discovery
 
-Ask with `ask_user`, **one question at a time**, choices when possible. Skip what `manual.profile.json` already answers. Never ask the user to paste a password in chat if they can type it in the browser.
+Ask the user, **batching independent questions** (up to 4 per call), choices when possible. Skip what `manual.profile.json` already answers. Never ask the user to paste a password in chat if they can type it in the browser.
 
 ## Questionnaire
 
@@ -19,8 +19,9 @@ Ask with `ask_user`, **one question at a time**, choices when possible. Skip wha
 ### Credentials handling
 Preferred order:
 1. **Visible browser, user types credentials** (`loginInteractive` in `capture-lib.js`), session stored in `.manual-auth/<role>.json`.
-2. Session-only env vars (`MANUAL_USER`, `MANUAL_PWD`) set in the same shell command that runs the script and removed afterwards. Never echo them, never log them, never put them in a file.
-3. If the user already pasted credentials in chat: use them only in the login form, never repeat them in files or summaries, and suggest rotating them.
+2. If the user already pasted credentials in chat: use them only in the login form, never repeat them in files or summaries, and suggest rotating them.
+
+Set `loginSuccessSelector` in `manual.profile.json` to an element that exists only after login in this app (the generic `nav` default can also match identity-provider pages).
 
 If login asks for a password change or "stay signed in?": ask the user; default is to dismiss/skip and answer "No".
 

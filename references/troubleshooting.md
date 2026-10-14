@@ -14,7 +14,6 @@
 | Native `<select>` dropdown not visible in screenshot | OS-rendered popup | Describe options in text (read `option` elements); screenshot the closed control |
 | Click on column header toggles sorting twice | Header toggles asc → desc → none | One click per state; verify the arrow icon before shot |
 | Blur not applied to an `<input>` | Site CSS overrides filter | Use `mask` mode (Playwright `mask` option) or Pillow `regions` |
-| Multi-line text replacement in a script silently does nothing | File has CRLF line endings | Use the editor/`edit` tool, or normalise EOL before replacing |
 | Process exits silently with code 0 mid-login | Browser disconnected on redirect | Add `browser.on('disconnected')` logging; try bundled Chromium/headed |
 | Numbers in text differ from the live app | Data changes | Don't hard-code counts, or say "for example" |
 | Different record shown each run | Data order/volatile | Mask by selector, not by value; pick records by criteria, not position |

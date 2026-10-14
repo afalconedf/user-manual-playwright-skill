@@ -27,23 +27,9 @@ git clone https://github.com/afalconedf/user-manual-playwright-skill .claude/ski
 git clone https://github.com/afalconedf/user-manual-playwright-skill .github/skills/user-manual-playwright   # GitHub Copilot
 ```
 
-Note: the skill says `ask_user` (Copilot's tool name); in Claude Code that maps to `AskUserQuestion`.
-
 Then ask the agent e.g. *"Write the user manual for <URL>, use the user-manual-playwright skill"*.
 
 Requirements: Node 18+, Python 3.9+, `pip install -r scripts/requirements.txt`, `npm install && npx playwright install chromium` in the scripts folder (copied to a work dir).
-
-## Publish on GitHub
-
-```powershell
-git init user-manual-playwright-skill
-Copy-Item -Recurse .github\skills\user-manual-playwright\* user-manual-playwright-skill\
-cd user-manual-playwright-skill
-git add . ; git commit -m "Initial version of user-manual-playwright skill"
-gh repo create afalconedf/user-manual-playwright-skill --public --source . --push
-```
-
-Before publishing check: no credentials, URLs or customer data in `LEARNINGS.md`, templates or scripts (`rg -i "password|token|@"`). Add a `LICENSE` of your choice.
 
 ## Suggested `.gitignore` in projects using it
 
