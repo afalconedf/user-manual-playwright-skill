@@ -26,5 +26,6 @@ Hints:
 ## Verify
 - Run the capture, then **view at least the screenshots with tables/modals** and check there is no readable value.
 - Run `python <skill-dir>/scripts/check_manual.py` (text-level leak check on the `.md`).
+- `check_manual.py` is a backstop, not proof: it misses all-letter passwords and anything inside screenshots.
 - If a new screen appears later in the manual, repeat the question "is anything here sensitive?".
 - Never keep unmasked originals inside the repo; if the user wants them, keep outside (session `files/` folder) and say so.

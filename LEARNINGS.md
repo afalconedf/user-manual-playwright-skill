@@ -1,9 +1,9 @@
 # LEARNINGS
 
-Self-improvement log. **Read at the start of every run; update at the end.** Entries are generic: no project names, URLs, credentials or customer data. Format: *symptom → cause → fix*. Merge duplicates, drop obsolete entries, promote stable lessons into `SKILL.md`/scripts (with the user's approval). Lessons are promoted to `references/troubleshooting.md` once stable.
+Self-improvement log. **Read at the start of every run; update at the end.** Entries are generic: no project names, URLs, credentials or customer data. Format: *symptom → cause → fix*. Merge duplicates, drop obsolete entries. Promote stable lessons into `references/troubleshooting.md` (or `SKILL.md`/scripts when they change the workflow, with the user's approval).
 
 ## Browser & login
-- Never keep passwords in scripts/files; let the user type them in a visible browser.
+- Never keep credentials in scripts/files; let the user type them in a visible browser.
 - "Stay signed in?" and password-change prompts: dismiss ("No"/skip) unless the user says otherwise.
 
 ## Capture

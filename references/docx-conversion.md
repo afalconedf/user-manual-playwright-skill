@@ -26,3 +26,4 @@ Template conventions understood by `md_to_docx.py`:
 - Open/inspect: heading levels, numbered steps, tables, every image present and not wider than the text area, no raw Markdown symbols left, page header/footer from the template.
 - Update the TOC field (Word: right-click → Update field) — tell the user, since fields refresh only inside Word.
 - Report limits honestly (e.g. nested lists flattened).
+- `md_to_docx.py` exits 1 and prints `ERROR missing image: …` when an image is missing (the DOCX is still written); fix the image and re-run.

@@ -19,9 +19,7 @@ Ask the user, **batching independent questions** (up to 4 per call), choices whe
 ### Credentials handling
 Preferred order:
 1. **Visible browser, user types credentials** (`loginInteractive` in `capture-lib.js`), session stored in `.manual-auth/<role>.json`.
-2. If the user already pasted credentials in chat: use them only in the login form, never repeat them in files or summaries, and suggest rotating them.
-
-Set `loginSuccessSelector` in `manual.profile.json` to an element that exists only after login in this app (the generic `nav` default can also match identity-provider pages).
+2. If the user already pasted credentials in chat: enter them only into the browser login form, never repeat them in files, logs or summaries, and suggest rotating them.
 
 If login asks for a password change or "stay signed in?": ask the user; default is to dismiss/skip and answer "No".
 

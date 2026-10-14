@@ -11,7 +11,7 @@ Produce a **user manual** for a web application: a Markdown file plus screenshot
 
 1. **Resolution 1920x1080, deviceScaleFactor 1** for every screenshot. Verify it (`python <skill-dir>/scripts/check_manual.py`).
 2. **Sensitive data is never visible** in a screenshot (blur or mask). If unsure whether a field is sensitive, **ask the user which** — do not guess, do not skip.
-3. **Never write credentials** (passwords, tokens, cookies) in any repo file, log, manual or chat summary. Credentials go only to the browser login form, typed by the user. Auth state files live in `.manual-auth/` (git-ignored).
+3. **Never write credentials** (passwords, tokens, cookies) in any repo file, log, manual or chat summary. Credentials go only into the browser login form — typed by the user, or, if the user already pasted them in chat, entered by the agent only into that form (never repeated elsewhere). Auth state files live in `.manual-auth/` (git-ignored).
 4. **Ask when in doubt.** Ask the user (`AskUserQuestion` in Claude Code, `ask_user` in Copilot); batch independent questions (up to 4 per call, with choices) instead of one per turn.
 5. **Do not invent.** Every button, label, operator and value in the manual must be seen in the live UI/DOM or in the source code. Anything unverified is either removed or asked about.
 
@@ -21,14 +21,14 @@ Produce a **user manual** for a web application: a Markdown file plus screenshot
 - Read `LEARNINGS.md` first.
 - `<skill-dir>` = the folder containing this SKILL.md.
 - Check tools: `node -v`, `python --version`. Copy `<skill-dir>/scripts/` to a work folder **outside the repo docs** (e.g. `%TEMP%\manual-work` or the session `files/` folder) and run `npm install` + `npx playwright install chromium` there. Run the Node capture from that work folder (`.manual-auth/` is created there). Prefer the **bundled Chromium** (it worked where Edge/Chrome and the Playwright MCP server failed — see `references/troubleshooting.md`).
-- If a `docs/<manual>/manual.profile.json` already exists, load it (URLs, roles, selectors to mask, template) and ask only what is missing or changed. Otherwise start from `templates/manual.profile.json`.
+- If a `docs/<manual>/manual.profile.json` already exists, load it (URLs, roles, selectors to mask, template) and ask only what is missing or changed. Otherwise start from `<skill-dir>/templates/manual.profile.json`.
 - Prefer light models for mechanical steps — see [references/cost-policy.md](references/cost-policy.md).
 
 ### 1. Discovery questionnaire (ask, don't assume)
 Follow [references/discovery.md](references/discovery.md). In short, ask, batching independent questions (up to 4 per call):
 1. Application **base URL** and which area/feature(s) the manual covers.
 2. **Audience** and language (default: the language of the user's request).
-3. **Login method** (SSO/Azure/ADFS/MFA/local form) and **which users/roles** may be used. Ask the user to type the password themselves in a visible browser. Prefer dedicated test users.
+3. **Login method** (SSO/Azure/ADFS/MFA/local form) and **which users/roles** may be used. Ask the user to type the password themselves in a visible browser. Prefer dedicated test users. Set `loginSuccessSelector` in the profile to an element that exists only after login in this app; leave it empty to detect login by `loginSuccessUrl`.
 4. **Roles that might see different interfaces** (menus, buttons, columns, data scope). Ask for one user per role.
 5. **Sensitive data**: show the list of candidate fields you found and ask which to blur/mask; ask about doubtful ones.
 6. **Output**: docs folder and manual name (default `docs/<manual-name>/manual.md` + `images/`), and the **DOCX template** (see step 6).
@@ -53,7 +53,7 @@ Use `scripts/capture-lib.js` (viewport 1920x1080, DPR 1, blur/mask helpers, reso
 - Details and blur modes: [references/sensitive-data.md](references/sensitive-data.md).
 
 ### 4. Write the manual (`manual.md`)
-Start from `templates/manual.template.md`. Keep one H1 (title), H2 per chapter, H3 per task. For every screen: purpose, numbered steps, screenshot, **field table** (field · what it represents · where the data comes from · notes). Take field meaning/source from the workspace source (views, config, code) when available; otherwise ask the user — nothing "inferred" stays in the final text.
+Start from `<skill-dir>/templates/manual.template.md`. Keep one H1 (title), H2 per chapter, H3 per task. For every screen: purpose, numbered steps, screenshot, **field table** (field · what it represents · where the data comes from · notes). Take field meaning/source from the workspace source (views, config, code) when available; otherwise ask the user — nothing "inferred" stays in the final text.
 Include: login chapter, screen overview, role matrix (if relevant), FAQ/troubleshooting, glossary, document version/date.
 
 ### 5. Validate
@@ -64,6 +64,8 @@ Follow [references/docx-conversion.md](references/docx-conversion.md). The `.md`
 1. A Copilot/agent docx capability if available in the host (give it the `.md`, the `images/` folder and the template, and ask it to rebuild the structure with the template's styles).
 2. `python <skill-dir>/scripts/md_to_docx.py manual.md --template template.docx -o manual.docx` (needs `pip install -r <skill-dir>/scripts/requirements.txt`).
 3. `pandoc manual.md -o manual.docx --reference-doc=template.docx` if pandoc exists.
+
+If `md_to_docx.py` exits 1 and prints `ERROR missing image: …` (the DOCX is still written), fix the image and re-run.
 
 No template available → ask whether to proceed with a neutral default; styles can be swapped later.
 
@@ -87,6 +89,6 @@ Delete temp files/snapshots and `.manual-auth/` (saved sessions = credentials) u
 | `scripts/blur_regions.py` | Post-hoc blur/fill of rectangles on a PNG (Pillow) |
 | `scripts/check_manual.py` | Validates links, resolution, leaked secrets |
 | `scripts/md_to_docx.py` | MD → DOCX using a template (python-docx) |
-| `templates/manual.template.md` | Manual skeleton |
-| `templates/manual.profile.json` | Per-project profile (no secrets) |
+| `<skill-dir>/templates/manual.template.md` | Manual skeleton |
+| `<skill-dir>/templates/manual.profile.json` | Per-project profile (no secrets) |
 | `LEARNINGS.md` | Accumulated lessons (self-improvement log) |
