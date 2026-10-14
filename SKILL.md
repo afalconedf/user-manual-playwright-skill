@@ -1,6 +1,6 @@
 ---
 name: user-manual-playwright
-description: Use when asked to write, update or refresh an end-user manual, user guide or "manuale utente"/"guida utente" for a web application, with screenshots of the UI (sensitive data masked), documentation of what each role sees, and conversion to DOCX from a corporate template. Uses Playwright to drive the app.
+description: Use when asked to write, update or refresh an end-user manual, user guide or "manuale utente"/"guida utente" for a web application, with screenshots of the UI (sensitive data masked), documentation of what each user role sees, and conversion to DOCX from a corporate template. Uses Playwright to drive the app.
 ---
 
 # user-manual-playwright
@@ -19,7 +19,8 @@ Produce a **user manual** for a web application: a Markdown file plus screenshot
 
 ### 0. Prepare
 - Read `LEARNINGS.md` first.
-- Check tools: `node -v`, `python --version`. Copy `scripts/` to a work folder **outside the repo docs** (e.g. `%TEMP%\manual-work` or the session `files/` folder) and run `npm install` + `npx playwright install chromium` there. Run the Node capture from that work folder (`.manual-auth/` is created there). Prefer the **bundled Chromium** (it worked where Edge/Chrome and the Playwright MCP server failed — see `references/troubleshooting.md`).
+- `<skill-dir>` = the folder containing this SKILL.md.
+- Check tools: `node -v`, `python --version`. Copy `<skill-dir>/scripts/` to a work folder **outside the repo docs** (e.g. `%TEMP%\manual-work` or the session `files/` folder) and run `npm install` + `npx playwright install chromium` there. Run the Node capture from that work folder (`.manual-auth/` is created there). Prefer the **bundled Chromium** (it worked where Edge/Chrome and the Playwright MCP server failed — see `references/troubleshooting.md`).
 - If a `docs/<manual>/manual.profile.json` already exists, load it (URLs, roles, selectors to mask, template) and ask only what is missing or changed. Otherwise start from `templates/manual.profile.json`.
 - Prefer light models for mechanical steps — see [references/cost-policy.md](references/cost-policy.md).
 
@@ -67,7 +68,7 @@ Follow [references/docx-conversion.md](references/docx-conversion.md). The `.md`
 No template available → ask whether to proceed with a neutral default; styles can be swapped later.
 
 ### 7. Self-improve (every run)
-At the end, review what went wrong or was slow. Append **generic, project-independent** lessons to `LEARNINGS.md` (symptom → cause → fix; no names, URLs, credentials or customer data). Before saving `LEARNINGS.md`, run `rg -n -i "password|token|@|https?://" LEARNINGS.md` (or grep) and remove any hit that is project data. If the skill folder is read-only or a shared install, propose the lesson to the user instead of writing. If a lesson changes how the skill should work, propose the edit to `SKILL.md`/scripts to the user and apply it when approved. Keep `LEARNINGS.md` short: merge duplicates, delete obsolete items.
+At the end, review what went wrong or was slow. Append **generic, project-independent** lessons to `LEARNINGS.md` (symptom → cause → fix; no names, URLs, credentials or customer data). Before saving `LEARNINGS.md`, run `rg -n -i "password|token|@|https?://" LEARNINGS.md` or `grep -nEi "password|token|@|https?://" LEARNINGS.md` and remove any hit that is project data. If the skill folder is read-only or a shared install, propose the lesson to the user instead of writing. If a lesson changes how the skill should work, propose the edit to `SKILL.md`/scripts to the user and apply it when approved. Keep `LEARNINGS.md` short: merge duplicates, delete obsolete items.
 
 ### 8. Clean up
 Delete temp files/snapshots and `.manual-auth/` (saved sessions = credentials) unless the user asks to keep it for a later run. Make sure `.manual-auth/` and `node_modules/` are git-ignored and that `git status` shows only the manual folder (and the profile). Do not commit unless asked.
