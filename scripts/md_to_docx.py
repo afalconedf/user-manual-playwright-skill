@@ -11,6 +11,7 @@ import argparse
 import copy
 import datetime
 import re
+import sys
 from pathlib import Path
 
 from docx import Document
@@ -22,6 +23,8 @@ from docx.shared import Emu
 INLINE = re.compile(r"(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`|!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\))")
 IMG = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+NUM_ITEM = re.compile(r"^\s*\d+[.)]\s+(.*)")
+MISSING = []  # image refs not found; main() reports them and exits 1
 
 
 def style(doc, name):
@@ -56,7 +59,8 @@ def add_runs(par, text, doc, base: Path):
         elif part.startswith("!["):
             add_image(doc, part, base)
         elif part.startswith("[") and LINK.fullmatch(part):
-            par.add_run(LINK.fullmatch(part).group(1))
+            text, url = LINK.fullmatch(part).groups()
+            par.add_run(text if text == url else f"{text} ({url})")
         elif part.startswith("*") and part.endswith("*") and len(part) > 2:
             par.add_run(part[1:-1]).italic = True
         else:
@@ -70,6 +74,7 @@ def add_image(doc, md_img, base: Path, caption=True):
     alt, ref = m.groups()
     path = (base / ref).resolve()
     if not path.exists():
+        MISSING.append(ref)
         doc.add_paragraph(f"[missing image: {ref}]")
         return
     doc.add_picture(str(path), width=Emu(int(text_width(doc))))
@@ -96,9 +101,16 @@ def add_toc(doc):
     run._r.append(end)
 
 
-def add_table(doc, rows, table_style):
+def add_table(doc, rows, table_style, base: Path):
     rows = [r for r in rows if not re.fullmatch(r"\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*", r)]
-    cells = [[c.strip() for c in r.strip().strip("|").split("|")] for r in rows]
+    cells = []
+    for r in rows:
+        parts = re.split(r"(?<!\\)\|", r.strip())
+        if not parts[0].strip():
+            parts = parts[1:]
+        if not parts[-1].strip():
+            parts = parts[:-1]
+        cells.append([c.strip().replace("\\|", "|") for c in parts])
     ncol = max(len(r) for r in cells)
     t = doc.add_table(rows=len(cells), cols=ncol)
     s = style(doc, table_style)
@@ -108,7 +120,7 @@ def add_table(doc, rows, table_style):
         for j in range(ncol):
             cell = t.cell(i, j)
             par = cell.paragraphs[0]
-            add_runs(par, r[j] if j < len(r) else "", doc, Path("."))
+            add_runs(par, r[j] if j < len(r) else "", doc, base)
             if i == 0:
                 for run in par.runs:
                     run.bold = True
@@ -155,6 +167,30 @@ def find_content_marker(doc):
     return None
 
 
+def new_list_num(doc):
+    # new w:num on the List Number abstract list, restarting at 1; None if the style has no numbering
+    s = style(doc, "List Number")
+    pPr = s.element.pPr if s is not None else None
+    if pPr is None or pPr.numPr is None or pPr.numPr.numId is None:
+        return None
+    numbering = doc.part.numbering_part.element
+    base = numbering.num_having_numId(pPr.numPr.numId.val)
+    if base is None:
+        return None
+    new_id = max(int(n.get(qn("w:numId"))) for n in numbering.findall(qn("w:num"))) + 1
+    num = OxmlElement("w:num")
+    num.set(qn("w:numId"), str(new_id))
+    num.append(copy.deepcopy(base.find(qn("w:abstractNumId"))))
+    ov = OxmlElement("w:lvlOverride")
+    ov.set(qn("w:ilvl"), "0")
+    so = OxmlElement("w:startOverride")
+    so.set(qn("w:val"), "1")
+    ov.append(so)
+    num.append(ov)
+    base.addnext(num)
+    return new_id
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("markdown")
@@ -197,16 +233,19 @@ def main():
     table_buf = []
     seen_h1 = False
     toc_done = not a.toc
+    num_id = None  # current numbered-list run; blank lines keep it, any other line ends it
 
     def flush_table():
         nonlocal table_buf
         if table_buf:
-            add_table(doc, table_buf, a.table_style)
+            add_table(doc, table_buf, a.table_style, base)
             doc.add_paragraph()
             table_buf = []
 
     for raw in lines:
         line = raw.rstrip()
+        if line.strip() and not NUM_ITEM.match(line):
+            num_id = None
         if line.startswith("```"):
             if in_code:
                 p = doc.add_paragraph("\n".join(code_buf))
@@ -259,11 +298,17 @@ def main():
             add_runs(p, m.group(1), doc, base)
             set_style(p, doc, "List Bullet")
             continue
-        m = re.match(r"^\s*\d+[.)]\s+(.*)", line)
+        m = NUM_ITEM.match(line)
         if m:
+            if num_id is None:
+                num_id = new_list_num(doc)
             p = doc.add_paragraph()
             add_runs(p, m.group(1), doc, base)
             set_style(p, doc, "List Number")
+            if num_id is not None:
+                numPr = p._p.get_or_add_pPr().get_or_add_numPr()
+                numPr.get_or_add_ilvl().val = 0
+                numPr.get_or_add_numId().val = num_id
             continue
         if IMG.fullmatch(line.strip()):
             add_image(doc, line.strip(), base)
@@ -284,6 +329,10 @@ def main():
     replace_placeholders(doc, values)
     doc.save(a.out)
     print(f"written {a.out}")
+    for ref in MISSING:
+        print(f"ERROR missing image: {ref}", file=sys.stderr)
+    if MISSING:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

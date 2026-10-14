@@ -4,9 +4,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from docx import Document
 from PIL import Image
 
 CHECK = Path(__file__).resolve().parents[1] / "check_manual.py"
+MD2DOCX = Path(__file__).resolve().parents[1] / "md_to_docx.py"
 
 
 def run_check(manual_text, setup=None):
@@ -68,6 +70,58 @@ class CheckManualTests(unittest.TestCase):
         code, out = run_check("[mario.rossi@corp.it](mailto:mario.rossi@corp.it)\n")
         self.assertEqual(code, 1, out)
         self.assertIn("e-mail in text", out)
+
+
+def run_md2docx(md_text, setup=None):
+    with tempfile.TemporaryDirectory() as tmp:
+        d = Path(tmp)
+        if setup:
+            setup(d)
+        md = d / "manual.md"
+        md.write_text(md_text, encoding="utf-8")
+        out = d / "manual.docx"
+        r = subprocess.run([sys.executable, str(MD2DOCX), str(md), "-o", str(out)], capture_output=True, text=True, encoding="utf-8")
+        doc = Document(out) if out.exists() else None
+        return r.returncode, r.stderr, doc
+
+
+class MdToDocxTests(unittest.TestCase):
+    def test_numbered_list_restarts_after_heading(self):
+        code, err, doc = run_md2docx("# Manual\n\n1. first\n\n2. second\n\n## Next\n\n1. again\n")
+        self.assertEqual(code, 0, err)
+        nums = [p._p.pPr.numPr.numId.val for p in doc.paragraphs if p.style.name == "List Number"]
+        self.assertEqual(len(nums), 3)
+        self.assertEqual(nums[0], nums[1])
+        self.assertNotEqual(nums[2], nums[0])
+
+    def test_missing_image_fails_run(self):
+        code, err, doc = run_md2docx("![pic](images/missing.png)\n")
+        self.assertEqual(code, 1, err)
+        self.assertIn("missing image", err)
+        self.assertIsNotNone(doc)
+
+    def test_table_image_resolves_from_markdown_folder(self):
+        def setup(d):
+            (d / "images").mkdir()
+            Image.new("RGB", (10, 10)).save(d / "images" / "a.png")
+
+        code, err, doc = run_md2docx("| H |\n|---|\n| ![a](images/a.png) |\n", setup)
+        self.assertEqual(code, 0, err)
+        self.assertEqual(len(doc.inline_shapes), 1)
+
+    def test_escaped_pipe_in_table_cell(self):
+        code, err, doc = run_md2docx("| H1 | H2 |\n|---|---|\n| a \\| b | c |\n")
+        self.assertEqual(code, 0, err)
+        t = doc.tables[0]
+        self.assertEqual(len(t.columns), 2)
+        self.assertEqual(t.cell(1, 0).text, "a | b")
+
+    def test_link_keeps_url(self):
+        code, err, doc = run_md2docx("[portal](https://example.com)\n\n[https://example.com](https://example.com)\n")
+        self.assertEqual(code, 0, err)
+        texts = [p.text for p in doc.paragraphs]
+        self.assertIn("portal (https://example.com)", texts)
+        self.assertIn("https://example.com", texts)
 
 
 if __name__ == "__main__":
