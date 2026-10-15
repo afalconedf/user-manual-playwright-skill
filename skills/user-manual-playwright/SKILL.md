@@ -15,6 +15,20 @@ Produce a **user manual** for a web application: a Markdown file plus screenshot
 4. **Ask when in doubt.** Ask the user (`AskUserQuestion` in Claude Code, `ask_user` in Copilot); batch independent questions (up to 4 per call, with choices) instead of one per turn.
 5. **Do not invent.** Every button, label, operator and value in the manual must be seen in the live UI/DOM or in the source code. Anything unverified is either removed or asked about.
 
+## Required inputs gate (do this FIRST, before any tool, install or browser)
+
+Never fail or start work because an input is missing: **ask for it**. Collect from the user's request and from `docs/<manual>/manual.profile.json` (if present), then ask with ONE batched `AskUserQuestion`/`ask_user` call (up to 4 questions, with choices where possible) for everything still missing:
+
+| Required | Why |
+|----------|-----|
+| `baseUrl` (+ area/feature to cover) | where to navigate |
+| login method + at least one user per role (the user types the password in a visible browser; never ask for it in chat) | authenticate |
+| `manualName` + output folder | where files go |
+| sensitive-data decision (confirm candidates found later, or "none") | rule 2 |
+
+Optional, ask but allow "skip/default": audience, language, DOCX template (step 6).
+If more than 4 are missing, ask in consecutive batches. Do not proceed to step 0 until all required values are known; an empty answer means ask again, not guess.
+
 ## Workflow
 
 ### 0. Prepare
